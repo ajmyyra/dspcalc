@@ -1,0 +1,26 @@
+<html>
+<head>
+	<title>Calculator</title>
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js"></script>
+	<script type="text/javascript" src="logic.js"></script> 
+</head>
+<body>
+	<form name="ajaxform" id="ajaxform" method="GET">
+		<input type="text" name="arg1" value =""/> <br/>
+		<select name="op">
+    		<option value="+">+</option>
+    		<option value="-">-</option>
+    		<option value="*">*</option>
+    		<option value="/">/</option>
+    	</select>
+    	<br/>
+    	<input type="text" name="arg2" value=""/> <br/>
+    	<input type="submit">
+	</form>
+
+	<p />
+	<div id="results">
+	</div>
+</body>
+</html>

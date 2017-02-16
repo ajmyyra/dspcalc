@@ -1,0 +1,11 @@
+# Config
+config.js
+
+# OS X
+.DS_Store
+
+# Forever, m2 etc
+.forever
+.forever/*
+.m2
+.m2/*
