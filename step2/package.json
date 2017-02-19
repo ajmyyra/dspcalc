@@ -1,0 +1,9 @@
+{
+  "name": "dspcalc-step2",
+  "version": "1.0",
+  "description": "Gnuplot-enabled sin(x) calculator for University of Helsinki course Distributed Systems Project",
+  "author": "Antti Myyrä <antti.myyra@helsinki.fi>",
+  "dependencies": {
+    "plotter": "~0.5.0"
+  }
+}

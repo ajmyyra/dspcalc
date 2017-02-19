@@ -5,15 +5,11 @@ $(document).ready(function() {
 		event.preventDefault();
 
 		var arg1 = $('input[name=arg1]').val().replace(" ", "");
-		var arg2 = $('input[name=arg2]').val().replace(" ", "");
-		var op = $('select[name=op]').val();
-
+		
 		console.log("New calculation! " + arg1 + " " + op + " " + arg2);
 
-		splitArguments(arg1, function(res1) {
-			splitArguments(arg2, function(res2) {
-				queryServer(res1, res2, op);
-			})
+		splitArguments(arg1, function(result) {
+			console.log("Final result for calculation " + arg1 + " is " + result);
 		});
 	});
 });
@@ -45,7 +41,7 @@ function splitArguments(arg, callback) {
 
 			if (operations.indexOf(arg.charAt(a)) > -1) {
 
-				// Check for numbers with exponent (fe 6.06e+3)
+				// Check for numbers with exponent (for example 6.06e+3)
 				if ((arg.charAt(a) == '+') && (arg.charAt(a-1) == 'e')) {
 					continue;
 				}
@@ -91,7 +87,7 @@ function queryServer(arg1, arg2, op, callback) {
 
 	$.ajax({
 			type: 'GET',
-			url: 'http://' + window.location.hostname + ':8080',
+			url: 'http://' + window.location.hostname + ':8081',
 			data: formData,
 			encode: true
 		})
@@ -103,6 +99,83 @@ function queryServer(arg1, arg2, op, callback) {
 			console.log("Fail: " + JSON.stringify(err));
 			showError('There was an error. :(\nMore info in browser error console.');
 		});
+}
+
+function sinQuery(multiplier, callback) {
+	console.log("Query for " + multiplier + " x sin(x)."); //debug
+
+	calculatePlotPoints(multiplier, -3.10, 3.10, 0.1, function(calculation) {
+		console.log(calculation); //debug
+
+		var formData = {
+			'op': 'sin',
+			'plot': calculation
+		};
+
+		$.ajax({
+			type: 'GET',
+			url: 'http://' + window.location.hostname + ':8081',
+			data: formData,
+			encode: true
+		})
+		.done(function(result) {
+			console.log(result.result); //debug
+			//renderResult(arg1, arg2, op, result.result);
+			//if (callback) callback(result.result);
+		})
+		.fail(function(err) {
+			console.log("Fail: " + JSON.stringify(err));
+			showError('There was an error. :(\nMore info in browser error console.');
+		});
+	});
+}
+
+function calculatePlotPoints(multiplier, beginning, end, stepsize, callback) {
+	var points = {};
+
+	if ((beginning + stepsize - end) > 0) {
+		console.log("Fail: no backwards plotting supported.");
+		return;
+	}
+
+	for (var a = beginning; a <= end; a += stepsize) {
+		points[a] = taylorSin(a*multiplier, 20);
+	}
+
+	if (callback) callback(points);
+}
+
+// Implementation of sin(x) function, based on Taylor Series.
+// http://people.math.sc.edu/girardi/m142/handouts/10sTaylorPolySeries.pdf
+function taylorSin(x, iterNum) {
+    var result = x;
+
+    for (var a = 1; a <= iterNum; a++) {
+        if ((a % 2) == 0) {
+            result += power(x, (2*a + 1)) / factorial(2*a + 1);
+        }
+        else {
+            result -= power(x, (2*a + 1)) / factorial(2*a + 1);
+        }
+    }
+
+    return result;
+}
+
+function factorial(num) {
+    if (num <= 1) {
+        return 1;
+    } else {
+        return num * factorial(num - 1);
+    }
+}
+
+function power(num, pow) {
+    var result = 1;
+    for (var i = 0; i < pow; i++) {
+        result = result * num;
+    }
+    return result;
 }
 
 function renderResult(arg1, arg2, op, result) {

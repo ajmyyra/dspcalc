@@ -5,10 +5,15 @@ $(document).ready(function() {
 		event.preventDefault();
 
 		var arg1 = $('input[name=arg1]').val().replace(" ", "");
-		console.log("New calculation! " + arg1);
+		var arg2 = $('input[name=arg2]').val().replace(" ", "");
+		var op = $('select[name=op]').val();
 
-		splitArguments(arg1, function(result) {
-			console.log("Final result for calculation " + arg1 + " is " + result);
+		console.log("New calculation! " + arg1 + " " + op + " " + arg2);
+
+		splitArguments(arg1, function(res1) {
+			splitArguments(arg2, function(res2) {
+				queryServer(res1, res2, op);
+			})
 		});
 	});
 });
