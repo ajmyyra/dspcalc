@@ -2,7 +2,6 @@ var http = require('http');
 var url = require('url');
 const serverport = 8080;
 const origin = 'http://localhost:8000';
-// TODO port and origin to ../config.js
 
 function handleRequest(request, response) {
 	response.setHeader('Access-Control-Allow-Origin', origin);
