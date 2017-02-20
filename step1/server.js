@@ -10,12 +10,14 @@ function handleRequest(request, response) {
 		var params = url.parse(request.url, true);
 
         if (isNumber(params.query.arg1) && isAllowedMethod(params.query.op) && isNumber(params.query.arg2)) {
+         	console.log(new Date() + ' New calculation from ' + request.connection.remoteAddress + ': ' + params.query.arg1 + ' ' + params.query.op + ' ' + params.query.arg2 + ' = ?');
          	result = calculate(params.query.arg1, params.query.arg2, params.query.op);
             
-         	console.log(new Date() + ' All parameters correct, returning with result: ' + result);
+         	var calculation = "" + params.query.arg1 + " " + params.query.op + " " + params.query.arg2 + " = " + result;
+            console.log(new Date() + ' Calculation done. Returning: ' + calculation);
             response.statusCode = 200;
             response.setHeader('Content-Type', 'application/json');
-            response.end(JSON.stringify( { 'result': result } ));
+            response.end(JSON.stringify( { 'calculation': calculation } ));
         }
         else {
         	console.log(new Date() + ' One or more parameters missing/wrong.');

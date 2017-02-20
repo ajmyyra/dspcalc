@@ -14,7 +14,7 @@ $(document).ready(function() {
 });
 
 function splitArguments(arg, callback) {
-	console.log("Splitting argument " + arg); //debug
+	console.log("Splitting new argument: " + arg); //debug
 
 	if (isNaN(arg)) {
 		var origLength = arg.length;
@@ -29,7 +29,6 @@ function splitArguments(arg, callback) {
 			if (a >= (origLength - 1)) {
 				if (firstFound) {
 					var res = queryServer(newArg1, currArg, currOp, function(result) {
-						console.log("Returning result: " + result); //debug
 						if (callback) callback(result);
 					});
 				}
@@ -65,6 +64,7 @@ function splitArguments(arg, callback) {
 					currArg = arg.substr(a+1);
 					firstFound = true;
 					last = a;
+
 				}
 			}
 		}
@@ -76,7 +76,7 @@ function splitArguments(arg, callback) {
 }
 
 function queryServer(arg1, arg2, op, callback) {
-	console.log("Query with: " +  arg1 + ", " + arg2 + ", " + op); //debug
+	console.log(new Date() + " Making a query with: " +  arg1 + ", " + arg2 + ", " + op);
 
 	var formData = {
 		'arg1': arg1,
@@ -91,8 +91,8 @@ function queryServer(arg1, arg2, op, callback) {
 			encode: true
 		})
 		.done(function(result) {
-			renderResult(arg1, arg2, op, result.result);
-			if (callback) callback(result.result);
+			renderResult(result.calculation);
+			if (callback) callback(getResult(result.calculation));
 		})
 		.fail(function(err) {
 			console.log("Fail: " + JSON.stringify(err));
@@ -100,12 +100,12 @@ function queryServer(arg1, arg2, op, callback) {
 		});
 }
 
-function renderResult(arg1, arg2, op, result) {
-	$("#results").append("<p>" 
-		+ arg1 + " " 
-		+ op + " " 
-		+ arg2 + " = " 
-		+ result + "</p>");
+function renderResult(result) {
+	$("#results").append("<p>" + result + "</p>");
+}
+
+function getResult(calculation) {
+	return calculation.substring(calculation.indexOf('=') + 2);
 }
 
 function showError(error) {
