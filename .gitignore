@@ -9,3 +9,4 @@ config.js
 .forever/*
 .m2
 .m2/*
+node_modules

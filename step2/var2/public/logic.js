@@ -1,4 +1,9 @@
 const operations = ['+', '-', '*', '/'];
+const pi = 3.14159;
+var ctx;
+var canvas;
+var xPadding = 50;
+var yPadding = 30;
 
 $(document).ready(function() {
 	$("#ajaxform").submit(function(event) {
@@ -6,11 +11,16 @@ $(document).ready(function() {
 
 		var arg1 = $('input[name=arg1]').val().replace(" ", "");
 		
-		console.log("New calculation! " + arg1);
+		console.log(new Date() + ' New calculation: ' + arg1);
 		emptyResults();
+		renderResult(arg1);
+
+		if (arg1 === "sin(x)") {
+			arg1 = "1*sin(x)";
+		}
 
 		splitArguments(arg1, function(result) {
-			console.log("Final result for calculation " + arg1 + " is " + result);
+			console.log(new Date() + ' ' + result);
 		});
 	});
 });
@@ -21,54 +31,27 @@ function splitArguments(arg, callback) {
 	if (isNaN(arg)) {
 		var origLength = arg.length;
 		var newArg1;
-		var newArg2;
 		var currOp;
 		var currArg;
-		var last;
 		var firstFound = false;
 
 		for (var a = 1; a < origLength; a++) {
 			if (a >= (origLength - 1)) {
-				if (firstFound) {
-
-					if (currArg === "sin(x)" && currOp == '*') {
-						sinQuery(newArg1, function() {
-							console.log("Calculated sin for " + newArg1 + "*" + currArg);
-						});
-					}
-					else {
-						var res = queryServer(newArg1, currArg, currOp, function(result) {
-							console.log("Returning result: " + result); //debug
-							if (callback) callback(result);
-						});
-					}
-
-					
+				if (firstFound && currArg === "sin(x)" && currOp == '*') {
+					sinQuery(newArg1, function() {
+						if (callback) callback("Calculated sin for " + newArg1 + "*" + currArg);
+					});
 				}
 				else {
-					showError("Given argument is empty.");
+					showError("Erroneous arguments.\nUsage: n*sin(x) or just sin(x)");
+					break;
 				}
 			}
 
 			if (operations.indexOf(arg.charAt(a)) > -1) {
 
-				// Check for numbers with exponent (for example 6.06e+3)
-				if ((arg.charAt(a) == '+') && (arg.charAt(a-1) == 'e')) {
-					continue;
-				}
-
 				if (firstFound) {
-					newArg2 = arg.substring(last+1, a);
-					currArg = arg.substr(a+1);
-					console.log("First already found. First: " + newArg1 + ", second: " + newArg2 + ", op: " + currOp + ", currArg: " + currArg); //debug
-					queryServer(newArg1, newArg2, currOp, function(result) {
-						console.log("Query returned result: " + result);
-						currOp = arg.charAt(a);
-						result += currOp + "" + currArg;
-						splitArguments(result, function(result) {
-							if (callback) callback(result);
-						});
-					});
+					showError("More than one calculation not allowed.\nUsage: n*sin(x) or just sin(x)");
 					break;
 				}
 				else {
@@ -76,66 +59,115 @@ function splitArguments(arg, callback) {
 					newArg1 = arg.substr(0, a);
 					currArg = arg.substr(a+1);
 					firstFound = true;
-					last = a;
 				}
 			}
 		}
 	}
 	else {
-		console.log("Returning only the argument " + arg);
+		console.log("Returning only the argument " + arg); //debug
 		if (callback) callback(arg);
 	}
 }
 
-function queryServer(arg1, arg2, op, callback) {
-	console.log("Query with: " +  arg1 + ", " + arg2 + ", " + op); //debug
-
-	var formData = {
-		'arg1': arg1,
-		'op': op,
-		'arg2': arg2
-	};
-
-	$.ajax({
-			type: 'GET',
-			url: 'http://' + window.location.hostname + ':8081',
-			data: formData,
-			encode: true
-		})
-		.done(function(result) {
-			renderResult(arg1 + " " + op + " " + arg2 + " = " + result.result);
-			if (callback) callback(result.result);
-		})
-		.fail(function(err) {
-			console.log("Fail: " + JSON.stringify(err));
-			showError('There was an error. :(\nMore info in browser error console.');
-		});
-}
-
 function sinQuery(multiplier, callback) {
-	console.log("Query for " + multiplier + " x sin(x)."); //debug
-
-	calculatePlotPoints(multiplier, -3.14, 3.14, 0.1, function(calculation) {
-		var formData = {
-			'op': 'sinselfcreated',
-			'plot': calculation
-		};
-
-		$.ajax({
-			type: 'GET',
-			url: 'http://' + window.location.hostname + ':8081',
-			data: formData,
-			encode: true
-		})
-		.done(function(result) {
-			renderResult(multiplier + " * sin(x)");
-			renderSinResult(result);
-		})
-		.fail(function(err) {
-			console.log("Fail: " + JSON.stringify(err));
-			showError('There was an error. :(\nMore info in browser error console.');
+	console.log("Creating a plot for " + multiplier + "*sin(x)"); //debug
+	calculatePlotPoints(multiplier, -pi, pi, 0.01, function(points) {
+		createSinPlot(points, function() {
+			if (callback) callback();
 		});
 	});
+}
+
+
+function createSinPlot(plotpoints, callback) {
+	canvas = $('#plot')[0];
+	var axes = {}
+	ctx = canvas.getContext('2d');
+	var maxY = 0;
+
+	$.each(plotpoints, function(x, y) {
+ 		if (y > maxY) maxY = y;
+ 	});
+ 	console.log(maxY); //debug
+
+	axes.x0 = 0.5*(canvas.width + xPadding);
+	axes.y0 = 0.5*(canvas.height - yPadding);
+	axes.scale = 4;
+	
+	renderAxes(ctx, axes);
+	renderXLegend(ctx, -pi, pi, axes);
+	renderYLegend(ctx, -maxY, maxY, axes);
+
+	drawGraph(ctx, axes, plotpoints, maxY);
+	if (callback) callback();
+}
+
+function renderAxes(ctx, axes) {
+	ctx.beginPath();
+ 	ctx.strokeStyle = 'rgb(128,128,128)';
+ 	ctx.font = 'italic 8pt sans-serif';
+	ctx.textAlign = 'center';
+
+ 	ctx.moveTo(xPadding, axes.y0);
+ 	ctx.lineTo(ctx.canvas.width, axes.y0);
+
+ 	ctx.moveTo(axes.x0, 0);
+ 	ctx.lineTo(axes.x0, ctx.canvas.height-yPadding);
+
+ 	ctx.stroke();
+}
+
+function renderXLegend(ctx, min, max) {
+	var step = (max - min) / 10;
+	var xStep = (ctx.canvas.width - xPadding)/10;
+	var yLoc = ctx.canvas.height - yPadding/2;
+
+	for (var a = 0; a < 11; a++) {
+		var value = min + a*step;
+		value = value.toFixed(2);
+		ctx.fillText(value, xPadding + a*xStep, yLoc);
+	}
+	ctx.stroke();
+}
+
+function renderYLegend(ctx, min, max) {
+	var step = (max - min) / 10;
+	var yStep = (ctx.canvas.height - yPadding)/10;
+	var xLoc = xPadding/2;
+
+	ctx.fillText((min).toFixed(2), xLoc, 10);
+	for (var a = 1; a < 11; a++) {
+		var value = min + a*step;
+		value = value.toFixed(2);
+		ctx.fillText(value, xLoc, a*yStep);
+	}
+}
+
+function drawGraph(ctx, axes, plotpoints, maxY) {
+	ctx.beginPath();
+ 	ctx.lineWidth = 2;
+ 	ctx.strokeStyle = "rgb(11,153,11)";
+ 	var firstpoint = true;
+
+ 	$.each(plotpoints, function(x, y) {
+ 		console.log("x: " + x + " (" + getX(parseFloat(x), axes.x0) + "), y: " + y + " (" + getY(y, axes.y0, maxY) + ")"); //debug
+ 		if (firstpoint) {
+ 			ctx.moveTo(getX(parseFloat(x), axes.x0-xPadding), getY(y, axes.y0, maxY));
+ 			firstpoint = false;
+ 		}
+ 		else {
+ 			ctx.lineTo(getX(parseFloat(x), axes.x0-xPadding), getY(y, axes.y0, maxY));
+ 		}
+ 	});
+	ctx.stroke();
+}
+
+function getX(x, origoWidth) {
+	return ((pi+x)/pi)*origoWidth + xPadding;
+}
+
+function getY(y, origoHeight, maxY) {
+	return ((maxY-y)/maxY)*origoHeight;
 }
 
 function calculatePlotPoints(multiplier, beginning, end, stepsize, callback) {
@@ -190,12 +222,9 @@ function renderResult(result) {
 	$("#results").append("<p>" + result + "</p>");
 }
 
-function renderSinResult(data) {
-	$("#results").append('<p><img src="data:image/png;base64,' + data + '" /></p>');
-}
-
 function emptyResults() {
 	$("#results").empty();
+	if (ctx) ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
 function showError(error) {

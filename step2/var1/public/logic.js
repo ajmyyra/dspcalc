@@ -1,4 +1,5 @@
 const operations = ['+', '-', '*', '/'];
+const pi = 3.14159;
 
 $(document).ready(function() {
 	$("#ajaxform").submit(function(event) {
@@ -8,6 +9,10 @@ $(document).ready(function() {
 		
 		console.log("New calculation! " + arg1);
 		emptyResults();
+
+		if (arg1 === "sin(x)") {
+			arg1 = "1*sin(x)"
+		}
 
 		splitArguments(arg1, function(result) {
 			console.log("Final result for calculation " + arg1 + " is " + result);
@@ -115,7 +120,7 @@ function queryServer(arg1, arg2, op, callback) {
 function sinQuery(multiplier, callback) {
 	console.log("Query for " + multiplier + " x sin(x)."); //debug
 
-	calculatePlotPoints(multiplier, -3.14, 3.14, 0.1, function(calculation) {
+	calculatePlotPoints(multiplier, -pi, pi, 0.1, function(calculation) {
 		var formData = {
 			'op': 'sinselfcreated',
 			'plot': calculation
@@ -128,7 +133,13 @@ function sinQuery(multiplier, callback) {
 			encode: true
 		})
 		.done(function(result) {
-			renderResult(multiplier + " * sin(x)");
+			if (multiplier > 1) {
+				renderResult(multiplier + " * sin(x)");
+			}
+			else {
+				renderResult("sin(x)");
+			}
+			
 			renderSinResult(result);
 		})
 		.fail(function(err) {
