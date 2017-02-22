@@ -47,11 +47,12 @@ function handleRequest(request, response) {
 
         if (isNumber(params.query.arg1) && isAllowedMethod(params.query.op) && isNumber(params.query.arg2)) {
          	result = calculate(params.query.arg1, params.query.arg2, params.query.op);
-            
-         	console.log(new Date() + ' All parameters correct, returning with result: ' + result);
+            var calculation = "" + params.query.arg1 + " " + params.query.op + " " + params.query.arg2 + " = " + result;
+
+         	console.log(new Date() + ' All parameters correct, returning with result: ' + calculation);
             response.statusCode = 200;
             response.setHeader('Content-Type', 'application/json');
-            response.end(JSON.stringify( { 'result': result } ));
+            response.end(JSON.stringify( { 'calculation': calculation } ));
         }
         else {
         	console.log(new Date() + ' One or more parameters missing/wrong.');
@@ -80,7 +81,7 @@ function calculate(arg1, arg2, op) {
 			return arg1 * arg2;
 			break;
 		case '/':
-			return (arg1 / arg2).toPrecision(3);
+			return (arg1 / arg2);
 		default:
 			return null;
 	}

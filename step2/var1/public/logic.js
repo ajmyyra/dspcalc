@@ -108,8 +108,9 @@ function queryServer(arg1, arg2, op, callback) {
 			encode: true
 		})
 		.done(function(result) {
-			renderResult(arg1 + " " + op + " " + arg2 + " = " + result.result);
-			if (callback) callback(result.result);
+			console.log(result); //debug
+			renderResult(result.calculation);
+			if (callback) callback(getResult(result.calculation));
 		})
 		.fail(function(err) {
 			console.log("Fail: " + JSON.stringify(err));
@@ -207,6 +208,10 @@ function renderSinResult(data) {
 
 function emptyResults() {
 	$("#results").empty();
+}
+
+function getResult(calculation) {
+	return calculation.substring(calculation.indexOf('=') + 2);
 }
 
 function showError(error) {
