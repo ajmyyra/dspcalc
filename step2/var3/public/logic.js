@@ -107,7 +107,7 @@ function queryServer(arg1, arg2, op, callback) {
 
 	$.ajax({
 			type: 'GET',
-			url: 'http://' + window.location.hostname + ':8081',
+			url: 'http://' + window.location.hostname + ':8080',
 			data: formData,
 			encode: true
 		})
@@ -150,6 +150,7 @@ function calculatePlotPoints(multiplier, beginning, end, stepsize, callback) {
 				iterator += stepsize;
 				if (iterator >= end) {
 					console.log(new Date() + ' Plot points calculated! Now rendering it.');
+					emptyStatus();
 					if (callback) callback(points);
 				}
 			});
@@ -249,7 +250,7 @@ function createSinPlot(plotpoints, callback) {
 	
 	renderAxes(ctx, axes);
 	renderXLegend(ctx, -pi, pi, axes);
-	renderYLegend(ctx, -maxY, maxY, axes);
+	renderYLegend(ctx, maxY, -maxY, axes);
 
 	drawGraph(ctx, axes, plotpoints, maxY);
 	if (callback) callback();

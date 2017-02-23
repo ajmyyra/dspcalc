@@ -6,7 +6,7 @@ var xPadding = 50;
 var yPadding = 30;
 var reqCount = 0;
 var cache;
-var cacheInit = 1000;
+var cacheInit = 5000;
 var cacheHit = 0;
 var cacheMiss = 0;
 
@@ -29,7 +29,7 @@ Cache.prototype = {
 	},
 	setMaxSize: function(newSize) {
 		newSize = parseInt(newSize);
-		if (!isNaN(newSize)) {
+		if (!isNaN(newSize) && newSize >= 0) {
 			console.log(new Date() + ' Cache size updated: ' + this.maxSize + ' -> ' + newSize);
 			this.maxSize = newSize;
 
@@ -48,7 +48,11 @@ Cache.prototype = {
 	getCurrentSize: function() {
 		return Object.keys(this.entries).length;
 	},
-	add: function(key, value) {
+	add: function(key, value) { 
+		if (this.maxSize <= 0) { // If cache is disabled
+			return;
+		}
+
 		if (this.order.indexOf(key) > -1) { // Avoiding duplicates if a key gets updated
 			this.order.splice(this.order.indexOf(key), 1);
 		}
@@ -58,7 +62,6 @@ Cache.prototype = {
 		
 		if (Object.keys(this.entries).length > this.maxSize) {
 			var removable = this.order.shift();
-			console.log("Deleting " + removable + ": " + this.entries[removable]);
 			delete this.entries[removable];
 		}
 	},
@@ -67,7 +70,7 @@ Cache.prototype = {
 		if (value == null) {
 			cacheMiss++;
 			return null;
-		} else { // To move the used value to the last of the queue
+		} else { // Muving the used value to the last of the queue
 			cacheHit++;
 			delete this.entries[key]; 
 			this.order.splice(this.order.indexOf(key), 1);
@@ -76,6 +79,10 @@ Cache.prototype = {
 			return value;
 		}
 		
+	},
+	giveCache: function() { //debug
+		return this.entries;
+		return this.order;
 	}
 };
 
@@ -84,22 +91,21 @@ $(document).ready(function() {
 	$("#ajaxform").submit(function(event) {
 		event.preventDefault();
 		var button = $(document.activeElement)[0].value; // Which button was pressed
+		
 		console.log(button); //debug
-
 		// TODO if (button === 'Simplify')
-		var arg1 = $('input[name=arg1]').val().replace(" ", "");
-		var arg2 = $('input[name=arg2]').val().replace(" ", "");
-		var op = $('select[name=op]').val();
-
+		
+		var arg1 = $('input[name=arg1]').val().replace(/ /g, '');
 		console.log(new Date + ' New calculation: ' + arg1);
 		emptyResults();
 
-		splitArguments(arg1, function(res1) {
-			splitArguments(arg2, function(res2) {
-				queryServer(res1, res2, op, function(result) {
-					//TODO what now?
-				});
-			})
+		if (arg1 === "sin(x)") {
+			arg1 = "1*sin(x)";
+		}
+
+		splitArguments(arg1, function(result) {
+			console.log(new Date() + ' Result for calculation ' + arg1 + ' is ' + result);
+			renderResult(arg1 + ' = ' + result);
 		});
 	});
 
@@ -177,27 +183,37 @@ function splitArguments(arg, callback) {
 }
 
 function queryServer(arg1, arg2, op, callback) {
-	reqCount += 1;
+	var cacheResult = cache.get('' + arg1 + op + arg2);
 
-	var formData = {
-		'arg1': arg1,
-		'op': op,
-		'arg2': arg2
-	};
+	if (cacheResult != null) {
+		if (callback) callback(cacheResult);
+	}
+	else {
+		reqCount += 1;
+		var formData = {
+			'arg1': arg1,
+			'op': op,
+			'arg2': arg2
+		};
 
-	$.ajax({
+		$.ajax({
 			type: 'GET',
-			url: 'http://' + window.location.hostname + ':8081',
+			url: 'http://' + window.location.hostname + ':8080',
 			data: formData,
 			encode: true
 		})
 		.done(function(result) {
-			if (callback) callback(getResult(result.calculation));
+			var calc = splitResult(result.calculation);
+			cache.add(calc[0].replace(/ /g, ''), calc[1]);
+			if (callback) callback(calc[1]);
 		})
 		.fail(function(err) {
 			console.log("Fail: " + JSON.stringify(err));
 			showError('There was an error. :(<br />More info in browser error console.');
 		});
+	}
+
+	
 }
 
 function sinQuery(multiplier, callback) {
@@ -329,7 +345,7 @@ function createSinPlot(plotpoints, callback) {
 	
 	renderAxes(ctx, axes);
 	renderXLegend(ctx, -pi, pi, axes);
-	renderYLegend(ctx, -maxY, maxY, axes);
+	renderYLegend(ctx, maxY, -maxY, axes);
 
 	drawGraph(ctx, axes, plotpoints, maxY);
 	if (callback) callback();
@@ -420,8 +436,8 @@ function emptyStatus() {
 	$("#status").empty();
 }
 
-function getResult(calculation) {
-	return calculation.substring(calculation.indexOf('=') + 2);
+function splitResult(calculation) {
+	return String(calculation).split(' = ');
 }
 
 function showError(error) {

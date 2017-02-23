@@ -88,7 +88,6 @@ function createSinPlot(plotpoints, callback) {
 	$.each(plotpoints, function(x, y) {
  		if (y > maxY) maxY = y;
  	});
- 	console.log(maxY); //debug
 
 	axes.x0 = 0.5*(canvas.width + xPadding);
 	axes.y0 = 0.5*(canvas.height - yPadding);
@@ -96,7 +95,7 @@ function createSinPlot(plotpoints, callback) {
 	
 	renderAxes(ctx, axes);
 	renderXLegend(ctx, -pi, pi, axes);
-	renderYLegend(ctx, -maxY, maxY, axes);
+	renderYLegend(ctx, maxY, -maxY, axes);
 
 	drawGraph(ctx, axes, plotpoints, maxY);
 	if (callback) callback();
