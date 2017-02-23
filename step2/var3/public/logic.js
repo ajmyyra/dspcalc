@@ -131,6 +131,7 @@ function sinQuery(multiplier, callback) {
 function calculatePlotPoints(multiplier, beginning, end, stepsize, callback) {
 	var points = {};
 	console.log(new Date() + ' Calculating plot points for ' + multiplier + '*sin(x). This will take a long time..');
+	showStatus('Calculating plot points for ' + multiplier + '*sin(x). This will take a long time..');
 
 	if ((beginning + stepsize - end) > 0) {
 		console.log("Fail: no backwards plotting supported.");
@@ -302,7 +303,6 @@ function drawGraph(ctx, axes, plotpoints, maxY) {
  	var firstpoint = true;
 
  	$.each(plotpoints, function(x, y) {
- 		console.log("x: " + x + " (" + getX(parseFloat(x), axes.x0) + "), y: " + y + " (" + getY(y, axes.y0, maxY) + ")"); //debug
  		if (firstpoint) {
  			ctx.moveTo(getX(parseFloat(x), axes.x0-xPadding), getY(y, axes.y0, maxY));
  			firstpoint = false;
@@ -329,6 +329,14 @@ function renderResult(result) {
 function emptyResults() {
 	$("#results").empty();
 	if (ctx) ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+function showStatus(status) {
+	$("#status").append("<p>" + status + "</p>");
+}
+
+function emptyStatus() {
+	$("#status").empty();
 }
 
 function getResult(calculation) {

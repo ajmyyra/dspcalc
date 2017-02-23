@@ -24,13 +24,14 @@ function handleRequest(request, response) {
             		
             		// Timeout is needed as gnuplot is executed in async manner, ending when file isn't
             		// yet saved to disk. We'll wait for 100 milliseconds for it. Other possibility is
-            		// to set up fs.watch(), but it's still unstable and fires of 2-N times.
+            		// to set up fs.watch(), but it's still unstable and fires 2-N times.
             		setTimeout(function(){
             			fs.readFile(filePath, function(err, data) {
     						response.writeHead(200, {
     							'Content-Type': 'image/png'
     						});
     						response.end(new Buffer(data).toString('base64'), function() {
+    							console.log(new Date() + ' Succesfully returned sin plot image to client.');
     							fs.unlink(tempPlotFile, function() {
     								console.log(new Date() + ' Temporary datafile ' + tempPlotFile + ' for gnuplot deleted.');
     							});
@@ -49,7 +50,7 @@ function handleRequest(request, response) {
          	result = calculate(params.query.arg1, params.query.arg2, params.query.op);
             var calculation = "" + params.query.arg1 + " " + params.query.op + " " + params.query.arg2 + " = " + result;
 
-         	console.log(new Date() + ' All parameters correct, returning with result: ' + calculation);
+         	console.log(new Date() + ' Returning result: ' + calculation);
             response.statusCode = 200;
             response.setHeader('Content-Type', 'application/json');
             response.end(JSON.stringify( { 'calculation': calculation } ));
