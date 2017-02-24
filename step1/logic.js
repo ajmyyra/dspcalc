@@ -6,6 +6,7 @@ $(document).ready(function() {
 
 		var arg1 = $('input[name=arg1]').val().replace(" ", "");
 		console.log("New calculation! " + arg1);
+		emptyStatus();
 
 		splitArguments(arg1, function(result) {
 			console.log("Final result for calculation " + arg1 + " is " + result);
@@ -104,10 +105,19 @@ function renderResult(result) {
 	$("#results").append("<p>" + result + "</p>");
 }
 
+function showStatus(status) {
+	$("#status").append("<p>" + status + "</p>");
+}
+
+function emptyStatus() {
+	$("#status").empty();
+}
+
 function getResult(calculation) {
 	return calculation.substring(calculation.indexOf('=') + 2);
 }
 
 function showError(error) {
-	alert(error);
+	console.log(new Date() + ' Error: ' + error);
+	showStatus(error);
 }

@@ -3,10 +3,11 @@ var url = require('url');
 var gnuplot = require('gnuplot');
 var fs = require('fs');
 var path = require('path');
-const serverport = 8080;
-const origin = 'http://localhost:8000';
-const tempPlotFile = 'plot.temp.dat';
-const sinPlotFile = 'sinplot.png';
+var config = require('./config');
+const serverport = config.serverport;
+const origin = config.origin;
+const tempPlotFile = config.plotfile;
+const sinPlotFile = config.sinfile;
 
 function handleRequest(request, response) {
 	response.setHeader('Access-Control-Allow-Origin', origin);

@@ -26,8 +26,6 @@ $(document).ready(function() {
 });
 
 function splitArguments(arg, callback) {
-	console.log("Splitting argument " + arg); //debug
-
 	if (isNaN(arg)) {
 		var origLength = arg.length;
 		var newArg1;
@@ -64,13 +62,14 @@ function splitArguments(arg, callback) {
 		}
 	}
 	else {
-		console.log("Returning only the argument " + arg); //debug
+		if (arg.length == 0) {
+			showError("Empty line.");
+		}
 		if (callback) callback(arg);
 	}
 }
 
 function sinQuery(multiplier, callback) {
-	console.log("Creating a plot for " + multiplier + "*sin(x)"); //debug
 	calculatePlotPoints(multiplier, -pi, pi, 0.01, function(points) {
 		createSinPlot(points, function() {
 			if (callback) callback();
@@ -149,7 +148,6 @@ function drawGraph(ctx, axes, plotpoints, maxY) {
  	var firstpoint = true;
 
  	$.each(plotpoints, function(x, y) {
- 		console.log("x: " + x + " (" + getX(parseFloat(x), axes.x0) + "), y: " + y + " (" + getY(y, axes.y0, maxY) + ")"); //debug
  		if (firstpoint) {
  			ctx.moveTo(getX(parseFloat(x), axes.x0-xPadding), getY(y, axes.y0, maxY));
  			firstpoint = false;
@@ -224,8 +222,18 @@ function renderResult(result) {
 function emptyResults() {
 	$("#results").empty();
 	if (ctx) ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+	emptyStatus();
+}
+
+function showStatus(status) {
+	$("#status").append("<p>" + status + "</p>");
+}
+
+function emptyStatus() {
+	$("#status").empty();
 }
 
 function showError(error) {
-	alert(error);
+	console.log(new Date() + ' Error: ' + error);
+	showStatus(error);
 }

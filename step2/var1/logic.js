@@ -7,7 +7,7 @@ $(document).ready(function() {
 
 		var arg1 = $('input[name=arg1]').val().replace(" ", "");
 		
-		console.log("New calculation! " + arg1);
+		console.log(new Date() + " New calculation: " + arg1);
 		emptyResults();
 
 		if (arg1 === "sin(x)") {
@@ -15,14 +15,12 @@ $(document).ready(function() {
 		}
 
 		splitArguments(arg1, function(result) {
-			console.log("Final result for calculation " + arg1 + " is " + result);
+			console.log(new Date() + " Final result for calculation " + arg1 + " is " + result);
 		});
 	});
 });
 
 function splitArguments(arg, callback) {
-	console.log("Splitting argument " + arg); //debug
-
 	if (isNaN(arg)) {
 		var origLength = arg.length;
 		var newArg1;
@@ -38,12 +36,11 @@ function splitArguments(arg, callback) {
 
 					if (currArg === "sin(x)" && currOp == '*') {
 						sinQuery(newArg1, function() {
-							console.log("Calculated sin for " + newArg1 + "*" + currArg);
+							console.log(new Date() + "Calculated sin for " + newArg1 + "*" + currArg);
 						});
 					}
 					else {
 						var res = queryServer(newArg1, currArg, currOp, function(result) {
-							console.log("Returning result: " + result); //debug
 							if (callback) callback(result);
 						});
 					}
@@ -65,9 +62,7 @@ function splitArguments(arg, callback) {
 				if (firstFound) {
 					newArg2 = arg.substring(last+1, a);
 					currArg = arg.substr(a+1);
-					console.log("First already found. First: " + newArg1 + ", second: " + newArg2 + ", op: " + currOp + ", currArg: " + currArg); //debug
 					queryServer(newArg1, newArg2, currOp, function(result) {
-						console.log("Query returned result: " + result);
 						currOp = arg.charAt(a);
 						result += currOp + "" + currArg;
 						splitArguments(result, function(result) {
@@ -87,14 +82,11 @@ function splitArguments(arg, callback) {
 		}
 	}
 	else {
-		console.log("Returning only the argument " + arg);
 		if (callback) callback(arg);
 	}
 }
 
 function queryServer(arg1, arg2, op, callback) {
-	console.log("Query with: " +  arg1 + ", " + arg2 + ", " + op); //debug
-
 	var formData = {
 		'arg1': arg1,
 		'op': op,
@@ -103,12 +95,11 @@ function queryServer(arg1, arg2, op, callback) {
 
 	$.ajax({
 			type: 'GET',
-			url: 'http://' + window.location.hostname + ':8081',
+			url: 'http://' + window.location.hostname + ':8080',
 			data: formData,
 			encode: true
 		})
 		.done(function(result) {
-			console.log(result); //debug
 			renderResult(result.calculation);
 			if (callback) callback(getResult(result.calculation));
 		})
@@ -129,7 +120,7 @@ function sinQuery(multiplier, callback) {
 
 		$.ajax({
 			type: 'GET',
-			url: 'http://' + window.location.hostname + ':8081',
+			url: 'http://' + window.location.hostname + ':8080',
 			data: formData,
 			encode: true
 		})
@@ -208,6 +199,15 @@ function renderSinResult(data) {
 
 function emptyResults() {
 	$("#results").empty();
+	emptyStatus();
+}
+
+function showStatus(status) {
+	$("#status").append("<p>" + status + "</p>");
+}
+
+function emptyStatus() {
+	$("#status").empty();
 }
 
 function getResult(calculation) {
@@ -215,5 +215,6 @@ function getResult(calculation) {
 }
 
 function showError(error) {
-	alert(error);
+	console.log(new Date() + ' Error: ' + error);
+	showStatus('Error: ' + error);
 }
