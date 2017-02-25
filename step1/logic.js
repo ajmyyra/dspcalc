@@ -1,3 +1,6 @@
+// Distributed Systems Project, spring 2017
+// Antti Myyrä, student number 014012055
+
 const operations = ['+', '-', '*', '/'];
 
 $(document).ready(function() {
