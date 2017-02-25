@@ -3,6 +3,7 @@ config.js
 
 # OS X
 .DS_Store
+.~lock*
 
 # Forever, m2 etc
 .forever

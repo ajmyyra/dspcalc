@@ -6,6 +6,8 @@ var xPadding = 50;
 var yPadding = 30;
 
 $(document).ready(function() {
+
+	// A callback for submit event processes the form when it is submitted.
 	$("#ajaxform").submit(function(event) {
 		event.preventDefault();
 
@@ -25,6 +27,8 @@ $(document).ready(function() {
 	});
 });
 
+// Given argument is splitted into parts that are calculated individually using the queryServer function.
+// The exception to this are the sin(x) calculations that are handled separately using the sinQuery function.
 function splitArguments(arg, callback) {
 	if (isNaN(arg)) {
 		var origLength = arg.length;
@@ -69,6 +73,8 @@ function splitArguments(arg, callback) {
 	}
 }
 
+// This function serves as a main function for sin(x) plotting, calculating the plot with
+// calculatePlotPoints function end sending it forward to the createSinPlot function.
 function sinQuery(multiplier, callback) {
 	calculatePlotPoints(multiplier, -pi, pi, 0.01, function(points) {
 		createSinPlot(points, function() {
@@ -78,6 +84,7 @@ function sinQuery(multiplier, callback) {
 }
 
 
+// This function governs the creation of the sin plot in the frontend, using the HTML5 canvas element.
 function createSinPlot(plotpoints, callback) {
 	canvas = $('#plot')[0];
 	var axes = {}
@@ -100,6 +107,7 @@ function createSinPlot(plotpoints, callback) {
 	if (callback) callback();
 }
 
+// This function renders the axes on the canvas element.
 function renderAxes(ctx, axes) {
 	ctx.beginPath();
  	ctx.strokeStyle = 'rgb(128,128,128)';
@@ -115,6 +123,7 @@ function renderAxes(ctx, axes) {
  	ctx.stroke();
 }
 
+// We're rendering X and Y legends to the graph with their individual functions.
 function renderXLegend(ctx, min, max) {
 	var step = (max - min) / 10;
 	var xStep = (ctx.canvas.width - xPadding)/10;
@@ -141,6 +150,7 @@ function renderYLegend(ctx, min, max) {
 	}
 }
 
+// Finally, we're drawing a sin(x) graph from the created plotpoints to the canvas element.
 function drawGraph(ctx, axes, plotpoints, maxY) {
 	ctx.beginPath();
  	ctx.lineWidth = 2;
@@ -159,6 +169,7 @@ function drawGraph(ctx, axes, plotpoints, maxY) {
 	ctx.stroke();
 }
 
+// Helper functions for X and Y to find the correct point in canvas, as its 0,0 point is in the upper left corner.
 function getX(x, origoWidth) {
 	return ((pi+x)/pi)*origoWidth + xPadding;
 }
@@ -167,6 +178,8 @@ function getY(y, origoHeight, maxY) {
 	return ((maxY-y)/maxY)*origoHeight;
 }
 
+// A n*sin(x) plot is created as an implementation of Taylor series below and multiplied.
+// Using 20 iterations gives us an error of less than 0.01% from Math.sin(x) function.
 function calculatePlotPoints(multiplier, beginning, end, stepsize, callback) {
 	var points = {};
 
@@ -199,6 +212,7 @@ function taylorSin(x, iterNum) {
     return result;
 }
 
+// Factorial function, for example 5! = 5*4*3*2*1
 function factorial(num) {
     if (num <= 1) {
         return 1;
@@ -207,6 +221,7 @@ function factorial(num) {
     }
 }
 
+// Power function, for example 4^3 = 4*4*4
 function power(num, pow) {
     var result = 1;
     for (var i = 0; i < pow; i++) {
@@ -215,6 +230,7 @@ function power(num, pow) {
     return result;
 }
 
+// Functions below are responsible for interacting with the HTML elements on the web page.
 function renderResult(result) {
 	$("#results").append("<p>" + result + "</p>");
 }

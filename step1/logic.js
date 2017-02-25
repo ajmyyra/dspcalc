@@ -1,6 +1,8 @@
 const operations = ['+', '-', '*', '/'];
 
 $(document).ready(function() {
+
+	// A callback for submit event processes the form when it is submitted.
 	$("#ajaxform").submit(function(event) {
 		event.preventDefault();
 
@@ -14,9 +16,8 @@ $(document).ready(function() {
 	});
 });
 
+// Given argument is splitted into parts that are calculated individually using the queryServer function
 function splitArguments(arg, callback) {
-	console.log("Splitting new argument: " + arg); //debug
-
 	if (isNaN(arg)) {
 		var origLength = arg.length;
 		var newArg1;
@@ -48,9 +49,7 @@ function splitArguments(arg, callback) {
 				if (firstFound) {
 					newArg2 = arg.substring(last+1, a);
 					currArg = arg.substr(a+1);
-					console.log("First already found. First: " + newArg1 + ", second: " + newArg2 + ", op: " + currOp + ", currArg: " + currArg); //debug
 					queryServer(newArg1, newArg2, currOp, function(result) {
-						console.log("Query returned result: " + result);
 						currOp = arg.charAt(a);
 						result += currOp + "" + currArg;
 						splitArguments(result, function(result) {
@@ -71,14 +70,14 @@ function splitArguments(arg, callback) {
 		}
 	}
 	else {
-		console.log("Returning only the argument " + arg);
 		if (callback) callback(arg);
 	}
 }
 
+// Communication with the server happens only through this function. 
+// It is given simple operations to send to the server for calculation.
+// Server must reside in the same host, running in or proxied from port 8080.
 function queryServer(arg1, arg2, op, callback) {
-	console.log(new Date() + " Making a query with: " +  arg1 + ", " + arg2 + ", " + op);
-
 	var formData = {
 		'arg1': arg1,
 		'op': op,
@@ -96,11 +95,17 @@ function queryServer(arg1, arg2, op, callback) {
 			if (callback) callback(getResult(result.calculation));
 		})
 		.fail(function(err) {
-			console.log("Fail: " + JSON.stringify(err));
+			console.log(new Date() + ' Fail: ' + JSON.stringify(err));
 			showError('There was an error. :(\nMore info in browser error console.');
 		});
 }
 
+// As the server sends back the whole calculation, were splitting result from it.
+function getResult(calculation) {
+	return calculation.substring(calculation.indexOf('=') + 2);
+}
+
+// Functions below are responsible for interacting with the HTML elements on the web page.
 function renderResult(result) {
 	$("#results").append("<p>" + result + "</p>");
 }
@@ -111,10 +116,6 @@ function showStatus(status) {
 
 function emptyStatus() {
 	$("#status").empty();
-}
-
-function getResult(calculation) {
-	return calculation.substring(calculation.indexOf('=') + 2);
 }
 
 function showError(error) {

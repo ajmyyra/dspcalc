@@ -9,8 +9,10 @@ var cache;
 var cacheInit = 1000;
 var cacheHit = 0;
 var cacheMiss = 0;
-var cacheBacklog = {}
+var cacheBacklog = {};
 
+// Request Cache implementation for storing calculations.
+// Entries are stored in entries as entries[x] = y and their addition order in order.
 function Cache (size) {
 	this.maxSize = 1;
 	if (!isNaN(size)) {
@@ -24,6 +26,7 @@ function Cache (size) {
 	this.order = [];
 };
 
+// Cache functions 
 Cache.prototype = {
 	getMaxSize: function() {
 		return this.maxSize;
@@ -61,7 +64,7 @@ Cache.prototype = {
 		this.entries[key] = value;
 		this.order.push(key);
 		
-		// If cache is full, adding causes one to fall off
+		// If cache is full, adding one causes other one to be discarded
 		if (Object.keys(this.entries).length > this.maxSize) {
 			var removable = this.order.shift();
 			delete this.entries[removable];
@@ -98,6 +101,8 @@ Cache.prototype = {
 
 
 $(document).ready(function() {
+
+	// A callback for submit event processes the calculation (Calculate or Simplify) when it is submitted.
 	$("#ajaxform").submit(function(event) {
 		event.preventDefault();
 		var button = $(document.activeElement)[0].value; // Which button was pressed
@@ -126,6 +131,7 @@ $(document).ready(function() {
 		
 	});
 
+	// A callback for cachecontrol form that can be used to set new cache size.
 	$("#cachecontrol").submit(function(event) {
 		event.preventDefault();
 		var newMax = $("#cachecontrol :input")[0].value;
@@ -144,6 +150,8 @@ $(document).ready(function() {
 	updateCacheControl();
 });
 
+// Given argument is splitted into parts that are calculated individually using the queryServer function.
+// The exception to this are the sin(x) calculations that are handled separately using the sinQuery function.
 function splitArguments(arg, callback) {
 	if (isNaN(arg)) {
 		var origLength = arg.length;
@@ -216,6 +224,9 @@ function splitArguments(arg, callback) {
 	}
 }
 
+// Similar to splitArguments function, but instead were returning only one found result.
+// Function searches throug the argument and tries to find matches stored in the cache.
+// If a match is found, calculation is replaced with the result and new calculation returned.
 function cacheSimplify(arg, callback) {
 	if (isNaN(arg)) {
 		var origLength = arg.length;
@@ -298,6 +309,9 @@ function cacheSimplify(arg, callback) {
 	}
 }
 
+// Communication with the server happens only through this function. 
+// It is given simple operations to send to the server for calculation.
+// Server must reside in the same host, running in or proxied from port 8080.
 function queryServer(arg1, arg2, op, callback) {
 	cache.get('' + arg1 + op + arg2, function(cacheResult) {
 		if (cacheResult != null) {
@@ -333,13 +347,18 @@ function queryServer(arg1, arg2, op, callback) {
 	
 }
 
+// As we don't alter cache during calculation, we're processing it only after an operation
+// is finished. This function takes the backlog and adds its elements to the cache.
 function handleCacheBacklog() {
 	$.each(cacheBacklog, function(key, value) {
 		cache.add(key, value);
 	});
+	cacheBacklog = {};
 	updateCacheControl();
 }
 
+// This function serves as a main function for sin(x) plotting, calculating the plot with
+// calculatePlotPoints function end sending it forward to the createSinPlot function.
 function sinQuery(multiplier, callback) {
 	calculatePlotPoints(multiplier, -pi, pi, 0.1, function(points) {
 		createSinPlot(points, sortKeys(points), function() {
@@ -348,7 +367,7 @@ function sinQuery(multiplier, callback) {
 	});
 }
 
-
+// Before creating the plot, we're sorting the keys in points dict, as their order is now guaranteed.
 function sortKeys(dictlist) {
     var keys = [];
 
@@ -366,6 +385,8 @@ function sortKeys(dictlist) {
     return sorted;
 }
 
+// A n*sin(x) plot is created as an implementation of Taylor series below and multiplied.
+// Using 8 iterations gives us an error of less than 1% from Math.sin(x) function.
 function calculatePlotPoints(multiplier, beginning, end, stepsize, callback) {
 	console.log(new Date() + ' Calculating plot points for ' + multiplier + '*sin(x). This will take a long time..');
 	showStatus('Calculating plot points for ' + multiplier + '*sin(x). This will take a long time..');
@@ -378,8 +399,6 @@ function calculatePlotPoints(multiplier, beginning, end, stepsize, callback) {
 	var points = {};
 	var iterator = beginning;
 	
-	// We're approximating sin(x) with 8 iterations,
-	// smallest possible without variation over 1%
 	for (var a = beginning; a <= end; a += stepsize) {
 		points[a] = null;
 		taylorSin(a, 8, function(sinResult, x) {
@@ -429,6 +448,8 @@ function taylorSin(x, iterNum, callback) {
     }
 }
 
+// Recursive helper function for Taylor series calculation.
+// All calculations are sent to the server for processing through queryServer function.
 function taylorize(x, a, callback) {
 	queryServer(2, a, '*', function(multiplication) {
 		queryServer(multiplication, 1, '+', function(plus) {
@@ -443,6 +464,8 @@ function taylorize(x, a, callback) {
 	});
 }
 
+// Factorial function, for example 5! = 5*4*3*2*1
+// All calculations are sent to the server for processing through queryServer function.
 function factorial(num, callback) {
 	if (num <= 1) {
         if (callback) callback(1);
@@ -455,6 +478,8 @@ function factorial(num, callback) {
     }
 }
 
+// Power function, for example 4^3 = 4*4*4
+// All calculations are sent to the server for processing through queryServer function.
 function power(result, num, pow, callback) {
 	queryServer(result, num, '*', function(returnedResult) {
     	pow--;
@@ -470,7 +495,7 @@ function power(result, num, pow, callback) {
     });
 }
 
-
+// This function governs the creation of the sin plot in the frontend, using the HTML5 canvas element.
 function createSinPlot(plotpoints, sortedKeys, callback) {
 	canvas = $('#plot')[0];
 	var axes = {}
@@ -494,6 +519,7 @@ function createSinPlot(plotpoints, sortedKeys, callback) {
 	if (callback) callback();
 }
 
+// This function renders the axes on the canvas element.
 function renderAxes(ctx, axes) {
 	ctx.beginPath();
  	ctx.strokeStyle = 'rgb(128,128,128)';
@@ -509,6 +535,7 @@ function renderAxes(ctx, axes) {
  	ctx.stroke();
 }
 
+// We're rendering X and Y legends to the graph with their individual functions.
 function renderXLegend(ctx, min, max) {
 	var step = (max - min) / 10;
 	var xStep = (ctx.canvas.width - xPadding)/10;
@@ -535,6 +562,7 @@ function renderYLegend(ctx, min, max) {
 	}
 }
 
+// Finally, we're drawing a sin(x) graph from the created plotpoints to the canvas element.
 function drawGraph(ctx, axes, plotpoints, sortedKeys, maxY) {
 	ctx.beginPath();
  	ctx.lineWidth = 2;
@@ -555,6 +583,7 @@ function drawGraph(ctx, axes, plotpoints, sortedKeys, maxY) {
 	ctx.stroke();
 }
 
+// Helper functions for X and Y to find the correct point in canvas, as its 0,0 point is in the upper left corner.
 function getX(x, origoWidth) {
 	return ((pi+x)/pi)*origoWidth + xPadding;
 }
@@ -563,10 +592,12 @@ function getY(y, origoHeight, maxY) {
 	return ((maxY-y)/maxY)*origoHeight;
 }
 
+// As the server sends back the whole calculation, were splitting it to the calculation and result.
 function splitResult(calculation) {
 	return String(calculation).split(' = ');
 }
 
+// Functions below are responsible for interacting with the HTML elements on the web page.
 function renderResult(result) {
 	$("#results").append("<p>" + result + "</p>");
 }

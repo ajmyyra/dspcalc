@@ -2,6 +2,8 @@ const operations = ['+', '-', '*', '/'];
 const pi = 3.14159;
 
 $(document).ready(function() {
+
+	// A callback for submit event processes the form when it is submitted.
 	$("#ajaxform").submit(function(event) {
 		event.preventDefault();
 
@@ -20,6 +22,8 @@ $(document).ready(function() {
 	});
 });
 
+// Given argument is splitted into parts that are calculated individually using the queryServer function.
+// The exception to this are the sin(x) calculations that are handled separately using the sinQuery function.
 function splitArguments(arg, callback) {
 	if (isNaN(arg)) {
 		var origLength = arg.length;
@@ -86,6 +90,9 @@ function splitArguments(arg, callback) {
 	}
 }
 
+// Communication with the server happens only through this function, with the exception of sin(x) plotting. 
+// It is given simple operations to send to the server for calculation.
+// Server must reside in the same host, running in or proxied from port 8080.
 function queryServer(arg1, arg2, op, callback) {
 	var formData = {
 		'arg1': arg1,
@@ -109,9 +116,9 @@ function queryServer(arg1, arg2, op, callback) {
 		});
 }
 
+// This function communicates with the server by sending it the n*sin(x) plot that is
+// calculated using the calculatePlotPoints function.
 function sinQuery(multiplier, callback) {
-	console.log("Query for " + multiplier + " x sin(x)."); //debug
-
 	calculatePlotPoints(multiplier, -pi, pi, 0.1, function(calculation) {
 		var formData = {
 			'op': 'sinselfcreated',
@@ -125,11 +132,11 @@ function sinQuery(multiplier, callback) {
 			encode: true
 		})
 		.done(function(result) {
-			if (multiplier > 1) {
-				renderResult(multiplier + " * sin(x)");
+			if (multiplier == 1) {
+				renderResult("sin(x)");
 			}
 			else {
-				renderResult("sin(x)");
+				renderResult(multiplier + " * sin(x)");
 			}
 			
 			renderSinResult(result);
@@ -141,6 +148,8 @@ function sinQuery(multiplier, callback) {
 	});
 }
 
+// A n*sin(x) plot is created as an implementation of Taylor series below and multiplied.
+// Using 20 iterations gives us an error of less than 0.01% from Math.sin(x) function.
 function calculatePlotPoints(multiplier, beginning, end, stepsize, callback) {
 	var points = {};
 
@@ -173,6 +182,7 @@ function taylorSin(x, iterNum) {
     return result;
 }
 
+// Factorial function, for example 5! = 5*4*3*2*1
 function factorial(num) {
     if (num <= 1) {
         return 1;
@@ -181,6 +191,7 @@ function factorial(num) {
     }
 }
 
+// Power function, for example 4^3 = 4*4*4
 function power(num, pow) {
     var result = 1;
     for (var i = 0; i < pow; i++) {
@@ -189,6 +200,12 @@ function power(num, pow) {
     return result;
 }
 
+// As the server sends back the whole calculation, were splitting result from it.
+function getResult(calculation) {
+	return calculation.substring(calculation.indexOf('=') + 2);
+}
+
+// Functions below are responsible for interacting with the HTML elements on the web page.
 function renderResult(result) {
 	$("#results").append("<p>" + result + "</p>");
 }
@@ -210,11 +227,7 @@ function emptyStatus() {
 	$("#status").empty();
 }
 
-function getResult(calculation) {
-	return calculation.substring(calculation.indexOf('=') + 2);
-}
-
 function showError(error) {
 	console.log(new Date() + ' Error: ' + error);
-	showStatus('Error: ' + error);
+	showStatus(error);
 }

@@ -22,7 +22,7 @@ apt-get install nginx
 
 1) Clone the repository from https://github.com/ajmyyra/dspcalc.git
 - Repository is not public, so deploy key needs to be set up before hand.
-- If repository isn't available, you can just untar the package attached along the report. Run this in your home folder (assumed to be /home/dsp for the rest of this instruction))
+- If repository isn't available, you can just untar the package attached along the report. Run this in your home folder (assumed to be /home/dsp for the rest of this instruction)
 ```
 mkdir dspcalc
 mv dspcalc.tar dspcalc/
@@ -87,7 +87,7 @@ forever start /home/dsp/dspcalc/server.js
 It might be a good thing to set a cronjob in case your server restarts.
 
 ```
-@reboot /usr/bin/forever start 
+@reboot /usr/bin/forever start /home/dsp/dspcalc/server.js
 ```
 
 Enjoy! Server logs can be found under ~/.forever/ .
@@ -109,8 +109,8 @@ module.exports = {
 
 'plotfile' is a temporary file where we'll save the received sin plot for gnuplot usage. It will be deleted immediately when the response is succesfully sent.
 
-'sinfile' is a temporary file where we'll save the output from Gnuplot. It will be deleted immediately when the response is succesfully sent.
+'sinfile' is a temporary image file where we'll save the output from Gnuplot. It will be deleted immediately when the response is succesfully sent.
 
 ## Motivation
 
-This project was made for a course Distributed Systems project organized by University of Helsinki. Project description can be found in Assingment-Multitier.pdf and documentation from Documentation.pdf.
+This project was made for a course Distributed Systems project organized by University of Helsinki. Project description and documentation can be found from Documentation.pdf.

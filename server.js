@@ -15,6 +15,7 @@ function handleRequest(request, response) {
 	if (request.method === 'GET') {
 		var params = url.parse(request.url, true);
 
+		// For sin(x) plot creation with pre-calculated plotpoints
 		if (params.query.op === 'sinselfcreated') {
 			
             var filePath = path.join(__dirname, sinPlotFile);
@@ -47,6 +48,7 @@ function handleRequest(request, response) {
             return;
 		}
 
+		// Common calculation. All the parameters are pre-checked before calculation is allowed.
         if (isNumber(params.query.arg1) && isAllowedMethod(params.query.op) && isNumber(params.query.arg2)) {
          	result = calculate(params.query.arg1, params.query.arg2, params.query.op);
             var calculation = "" + params.query.arg1 + " " + params.query.op + " " + params.query.arg2 + " = " + result;
@@ -102,6 +104,7 @@ function badRequest(response) {
 	response.end();
 }
 
+// As the plot was required to be sent over HTTP GET, it needs to be processed for plotpoints.
 function handleSinFormData(params, callback) {
 	var regexp = /\[([^\]]+)\]/;
 	var plotpoints = {};
@@ -116,10 +119,12 @@ function handleSinFormData(params, callback) {
     if (callback) callback(plotpoints);
 }
 
+// We'll create the plot using Gnuplot.
+// Plotpoints are saved into a file for gnuplot to more easily process them.
 function createSinPlot(plotpoints, callback) {
 	var stream = fs.createWriteStream(tempPlotFile);
 	stream.once('open', function(fd) {
-		stream.write("#Temporary data file for n*sin(x) data points\n");
+		stream.write("# Temporary data file for n*sin(x) data points\n");
 
 		for (x in plotpoints) {
 			stream.write(x + "\t" + plotpoints[x] + "\n");
@@ -143,6 +148,7 @@ function createSinPlot(plotpoints, callback) {
 	});
 }
 
+// Image file is converted to base64 encoding for the browser to be able to show it.
 function base64_encode(file) {
     var bitmap = fs.readFileSync(file);
     return new Buffer(bitmap).toString('base64');
